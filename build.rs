@@ -258,7 +258,7 @@ struct CodeGenerator {
 impl CodeGenerator {
     pub fn generate_module(&self, mcu: &str, svd: &Device) -> anyhow::Result<()> {
         let mut svd2rust_config = svd2rust::Config::default();
-        svd2rust_config.target = svd2rust::Target::None;
+        svd2rust_config.target = svd2rust::Target::Avr;
         svd2rust_config.generic_mod = true;
         svd2rust_config.make_mod = true;
         svd2rust_config.strict = true;
