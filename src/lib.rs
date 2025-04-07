@@ -409,3 +409,18 @@ pub use crate::devices::attiny88;
 pub use crate::devices::avr64du28;
 #[cfg(feature = "avr64du32")]
 pub use crate::devices::avr64du32;
+
+#[allow(non_camel_case_types, unused_attributes, unreachable_patterns)]
+pub mod ccp;
+
+#[cfg(feature = "attiny417")]
+pub use crate::ccp::attiny417 as attiny417_ccp;
+
+#[cfg(feature = "attiny817")]
+pub use crate::ccp::attiny817 as attiny817_ccp;
+
+#[cfg(feature = "attiny1617")]
+pub use crate::ccp::attiny1617 as attiny1617_ccp;
+
+#[cfg(feature = "attiny3217")]
+pub use crate::ccp::attiny3217 as attiny3217_ccp;
