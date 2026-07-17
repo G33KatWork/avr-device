@@ -37,8 +37,12 @@ fn main() -> anyhow::Result<()> {
         );
     }
     for (mcu, svd) in &svds {
+        let settings = mcu_inputs
+            .get_map()
+            .get(*mcu)
+            .and_then(|inputs| inputs.settings.as_ref());
         code_generator
-            .generate_module(mcu, svd)
+            .generate_module(mcu, svd, settings)
             .context(format!("failed to generate PAC code for MCU {}", mcu))?;
     }
     code_generator
@@ -57,6 +61,9 @@ struct McuInputs {
     atdf_path: PathBuf,
     atdf: atdf2svd::chip::Chip,
     patch: Option<yaml_rust2::Yaml>,
+    /// Chip-specific svd2rust settings (e.g. the CCP protected register list)
+    /// for information that the ATDF/SVD files cannot express.
+    settings: Option<svd2rust::config::Settings>,
 }
 
 #[derive(Debug)]
@@ -72,9 +79,11 @@ impl InputFinder {
     pub fn find(crate_root: &Path, cargo_directives: &mut Vec<String>) -> anyhow::Result<Self> {
         let packs_dir = crate_root.join("vendor");
         let patches_dir = crate_root.join("patch");
+        let settings_dir = crate_root.join("settings");
 
         Self::track_path(&packs_dir, cargo_directives)?;
         Self::track_path(&patches_dir, cargo_directives)?;
+        Self::track_path(&settings_dir, cargo_directives)?;
 
         let mut inputs = BTreeMap::new();
         let mut all_mcus = Vec::new();
@@ -124,12 +133,29 @@ impl InputFinder {
             } else {
                 None
             };
+            let settings_path = settings_dir.join(&mcu_name).with_extension("yaml");
+            let settings = if settings_path
+                .try_exists()
+                .map_err(io_error_in_path(&settings_path))
+                .context("could not test for settings path existence")?
+            {
+                let settings_str = fs::read_to_string(&settings_path)
+                    .map_err(io_error_in_path(&settings_path))
+                    .context("could not read settings file")?;
+                Some(
+                    svd2rust::config::Settings::from_yaml(&settings_str)
+                        .context("failed to parse settings YAML")?,
+                )
+            } else {
+                None
+            };
             inputs.insert(
                 mcu_name,
                 McuInputs {
                     atdf_path,
                     atdf,
                     patch,
+                    settings,
                 },
             );
         }
@@ -251,9 +277,14 @@ struct CodeGenerator {
 }
 
 impl CodeGenerator {
-    pub fn generate_module(&self, mcu: &str, svd: &Device) -> anyhow::Result<()> {
+    pub fn generate_module(
+        &self,
+        mcu: &str,
+        svd: &Device,
+        settings: Option<&svd2rust::config::Settings>,
+    ) -> anyhow::Result<()> {
         let mut svd2rust_config = svd2rust::Config::default();
-        svd2rust_config.target = svd2rust::Target::None;
+        svd2rust_config.target = svd2rust::Target::Avr;
         svd2rust_config.generic_mod = true;
         svd2rust_config.make_mod = true;
         svd2rust_config.strict = true;
@@ -262,6 +293,9 @@ impl CodeGenerator {
         svd2rust_config.reexport_core_peripherals = false;
         svd2rust_config.reexport_interrupt = false;
         svd2rust_config.ident_formats = IdentFormats::legacy_theme();
+        if let Some(settings) = settings {
+            svd2rust_config.settings.update_from(settings.clone());
+        }
 
         let generated_stream =
             svd2rust::generate::device::render(svd, &svd2rust_config, &mut String::new())

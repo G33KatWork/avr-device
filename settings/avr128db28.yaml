@@ -1,0 +1,29 @@
+# Configuration change protection (CCP) description for this chip.
+#
+# The ATDF/SVD files do not encode which registers are CCP protected, so the
+# list is maintained here by hand, from the "Registers Under Configuration
+# Change Protection" tables in the AVR128DB28/32/48/64 datasheet
+# (DS40002247).
+#
+# Magic values (CPU.CCP signatures): 0x9D = SPM, 0xD8 = IOREG.
+avr_config:
+  ccp:
+    unlock_register: "CPU.CCP"
+    protected_registers:
+      - { register: "NVMCTRL.CTRLA", magic: 0x9D }
+      - { register: "NVMCTRL.CTRLB", magic: 0xD8 }
+      - { register: "CLKCTRL.MCLKCTRLA", magic: 0xD8 }
+      - { register: "CLKCTRL.MCLKCTRLB", magic: 0xD8 }
+      - { register: "CLKCTRL.MCLKCTRLC", magic: 0xD8 }
+      - { register: "CLKCTRL.MCLKINTCTRL", magic: 0xD8 }
+      - { register: "CLKCTRL.OSCHFCTRLA", magic: 0xD8 }
+      - { register: "CLKCTRL.PLLCTRLA", magic: 0xD8 }
+      - { register: "CLKCTRL.OSC32KCTRLA", magic: 0xD8 }
+      - { register: "CLKCTRL.XOSC32KCTRLA", magic: 0xD8 }
+      - { register: "CLKCTRL.XOSCHFCTRLA", magic: 0xD8 }
+      - { register: "RSTCTRL.SWRR", magic: 0xD8 }
+      - { register: "CPUINT.CTRLA", magic: 0xD8 }
+      - { register: "BOD.CTRLA", magic: 0xD8 }
+      - { register: "WDT.CTRLA", magic: 0xD8 }
+      - { register: "WDT.STATUS", magic: 0xD8 }
+      - { register: "TCD0.FAULTCTRL", magic: 0xD8 }

@@ -21,6 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Support for `ATtiny10` ([#252]).
 - Support for `AVR128DB32` ([#259]).
+- Support for writing configuration change protected (CCP) registers on
+  `ATtiny417`/`ATtiny817`/`ATtiny1617`/`ATtiny3217` via
+  `write_protected()`/`modify_protected()` (import
+  `avr_device::generic::ProtectedWritable`).  Which registers are protected is
+  described per chip in `settings/<mcu>.yaml` and turned into `Protected` trait
+  impls by svd2rust during code generation.
 
 ### Fixed
 - `ATtiny412`: Fixed `TCA0` missing and a bunch of incorrect register fields ([#260]).
